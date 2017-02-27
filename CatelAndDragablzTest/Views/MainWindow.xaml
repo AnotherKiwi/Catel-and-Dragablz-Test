@@ -1,13 +1,48 @@
-﻿<catel:DataWindow x:Class="CatelAndDragablzTest.Views.MainWindow"
+﻿<catel:DataWindow x:Class="Views.MainWindow"
                   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                  xmlns:h="clr-namespace:CatelAndDragablzTest.Helpers"
+                  xmlns:uc="clr-namespace:CatelAndDragablzTest.UserControls"
+                  xmlns:vm="clr-namespace:CatelAndDragablzTest.ViewModels"
 				  xmlns:catel="http://catel.codeplex.com"
-                  ShowInTaskbar="True" ResizeMode="CanResize" SizeToContent="Manual" WindowStartupLocation="Manual" WindowState="Maximized">
-    
+                  xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz"
+                  xmlns:dockablz="http://dragablz.net/winfx/xaml/dockablz"
+                  ShowInTaskbar="True" ResizeMode="CanResize" SizeToContent="Manual" 
+                  WindowStartupLocation="Manual" WindowState="Normal"
+                  Title="{Binding Title}">
+
     <!-- Resources -->
     <catel:DataWindow.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="pack://application:,,,/Dragablz;component/Themes/Generic.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <DataTemplate DataType="{x:Type dragablz:HeaderedItemViewModel}">
+                <ContentControl Content="{Binding Content}" Margin="4 4 4 4" FontSize="14" />
+            </DataTemplate>
+            <DataTemplate DataType="{x:Type vm:CustomTabHeaderViewModel}">
+                <uc:CustomTabHeader />
+            </DataTemplate>
+            <dragablz:InterTabController x:Key="InterTabController" 
+                                         x:Shared="False" 
+                                         InterTabClient="{Binding InterTabClient}" 
+                                         Partition="2AE89D18-F236-4D20-9605-6C03319038E6" />
+
+            <Style TargetType="{x:Type dragablz:TabablzControl}" x:Key="TabablzControlStyle">
+                <Setter Property="NewItemFactory" Value="{x:Static h:NewTabItem.Factory}" />
+                <Setter Property="ItemsSource" Value="{Binding TabItemsSource}" />
+                <Setter Property="ClosingItemCallback" Value="{Binding ClosingTabItemHandler}" />
+                <Setter Property="ShowDefaultAddButton" Value="True" />
+                <Setter Property="ShowDefaultCloseButton" Value="True" />
+                <Setter Property="AdjacentHeaderItemOffset" Value="-10" />
+                <Setter Property="ItemContainerStyle" Value="{StaticResource TrapezoidDragableTabItemStyle}" />
+                <Setter Property="HeaderMemberPath" Value="Header" />
+                <Setter Property="InterTabController" Value="{StaticResource InterTabController}" />
+                <Setter Property="Margin" Value="0 8 0 0" />
+            </Style>
+        </ResourceDictionary>
     </catel:DataWindow.Resources>
-    
+
     <!-- Content -->
      <catel:StackGrid x:Name="LayoutRoot">
 		<catel:StackGrid.RowDefinitions>
@@ -15,7 +50,35 @@
 			<RowDefinition Height="Auto" />
 		</catel:StackGrid.RowDefinitions>
 		
-		<Label Content="{Binding Title}" />
-        <Label Content="Here goes your real content" />
+        <dockablz:Layout Grid.Row="1" 
+                             Partition="2AE89D18-F236-4D20-9605-6C03319038E6" 
+                             x:Name="RootLayout"
+                             IsFloatDropZoneEnabled="False">
+
+            <!-- branch template lets dragablz create a new tab control after a window is split via docking -->
+            <dockablz:Layout.BranchTemplate>
+                <DataTemplate>
+                    <dragablz:TabablzControl Style="{StaticResource TabablzControlStyle}">
+                        <dragablz:TabablzControl.InterTabController>
+                            <dragablz:InterTabController InterTabClient="{Binding InterTabClient}" 
+                                                             Partition="2AE89D18-F236-4D20-9605-6C03319038E6" />
+                        </dragablz:TabablzControl.InterTabController>
+                    </dragablz:TabablzControl>
+                </DataTemplate>
+            </dockablz:Layout.BranchTemplate>
+
+            <!-- a root, named tab control is needed, so when a tab is torn and a new window is created,
+                     the new target tab control can be identified -->
+            <dragablz:TabablzControl x:Name="InitialTabablzControl"
+                                         FixedHeaderCount="1"
+                                         ItemsSource="{Binding TabItemsSource}"
+                                         Style="{StaticResource TabablzControlStyle}"
+                                         AddLocationHint="After">
+                <dragablz:TabablzControl.InterTabController>
+                    <dragablz:InterTabController InterTabClient="{Binding InterTabClient}" 
+                                                     Partition="2AE89D18-F236-4D20-9605-6C03319038E6" />
+                </dragablz:TabablzControl.InterTabController>
+            </dragablz:TabablzControl>
+        </dockablz:Layout>
     </catel:StackGrid>
 </catel:DataWindow>
